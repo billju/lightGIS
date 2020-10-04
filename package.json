@@ -1,0 +1,34 @@
+{
+  "name": "lightGIS",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel src/index.html -p 1234",
+    "xcopy": "xcopy public\\* dist\\ /E/H/C/I/Y",
+    "build": "parcel build src/index.html -d lightGIS --public-url .",
+    "postbuild": "xcopy public\\* lightGIS\\ /E/H/C/I/Y",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/polyfill": "^7.11.5",
+    "@fortawesome/fontawesome-free": "^5.14.0",
+    "@mapbox/togeojson": "^0.16.0",
+    "axios": "^0.20.0",
+    "bootstrap": "^4.5.2",
+    "cssnano": "^4.1.10",
+    "element-ui": "^2.13.2",
+    "vue": "^2.6.12",
+    "vue-hot-reload-api": "^2.3.4",
+    "vuedraggable": "^2.24.1",
+    "vuex": "^3.5.1"
+  },
+  "devDependencies": {
+    "@vue/component-compiler-utils": "^3.2.0",
+    "pug": "^3.0.0",
+    "vue-template-compiler": "^2.6.12"
+  }
+}
