@@ -1,3 +1,4 @@
+// scp -r lightGIS root@172.105.120.225:/home/admin/dist/
 import Vue from 'vue'
 import Vuex from 'vuex'
 Vue.use(Vuex)
@@ -61,7 +62,7 @@ const state = {
         {url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',name:'ESRI衛星',opacity:1,active:false},
         {url:'https://wmts.nlsc.gov.tw/wmts/EMAPX99/default/EPSG:3857/{z}/{y}/{x}',name:'交通路網',opacity:1,active:false},
     ].map(raster=>{
-        const token = "qn5cMMfaz2E84GbcNlqB2deRwJpO0NfuIorLEzgqLiaQv3lB8mfoVF7VU0u0rJCMbkMjDCBz2xD1JH-8fYMuBg.."
+        const token = "UZMPyXsuwgyREeneNi2o3mp6SSYCht9zGRUDfXbTKTa6iKGWKil43fWhCLLBvg5hlY7PTjQOMvMveuxhe1vYCg.."
         raster.url = raster.url.replace('{token}',token)
         return raster
     }),

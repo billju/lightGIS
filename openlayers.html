@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/css/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/build/ol.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+    <style>
+        html,
+        body,
+        #app,
+        #map {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <title>OpenLayers</title>
+</head>
+
+<body>
+    <div id="app">
+        <div id="map" class="map"></div>
+        <div id="popup" class="popover bs-popover-top show" style="transform:translate(-50%,-110%)">
+            <div class="arrow" style="left: 50%;transform:translateX(-80%)"></div>
+            <h3 class="popover-header">BANG</h3>
+            <div class="popover-body">
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-primary">屬性</button>
+                    <button class="btn btn-sm btn-primary">文字</button>
+                    <button class="btn btn-sm btn-primary">框線</button>
+                    <button class="btn btn-sm btn-primary">填滿</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    const RASTERS = [
+        { url: 'https://lohas.taichung.gov.tw/arcgis/rest/services/Tiled3857/URBAN3857/MapServer/tile/{z}/{y}/{x}?blankTile=false&token={token}', name: '臺中都市計畫', opacity: 0.8, active: false },
+        { url: 'https://lohas.taichung.gov.tw/arcgis/rest/services/Tiled3857/Land3857/MapServer/tile/{z}/{y}/{x}?blankTile=false&token={token}', name: '地段及地籍圖', opacity: 0.8, active: false },
+        // {url:'https://lohas.taichung.gov.tw/arcgis/rest/services/Tiled3857/LandPriceMapAA163857/MapServer/tile/{z}/{y}/{x}?blankTile=false&token={token}',name:'公告現值',opacity:0.8,active:false},
+        // {url:'https://lohas.taichung.gov.tw/arcgis/rest/services/Tiled3857/LandPriceMapAA173857/MapServer/tile/{z}/{y}/{x}?blankTile=false&token={token}',name:'公告地價',opacity:0.8,active:false},
+        { url: 'https://eghouse.hccg.gov.tw/arcgis/rest/services/Tiled3857/Nature_policy/MapServer/tile/{z}/{y}/{x}?blankTile=false', name: '特殊管制', opacity: 0.8, active: false },
+        { url: 'https://eghouse.hccg.gov.tw/arcgis/rest/services/Tiled3857/Nature_water/MapServer/tile/{z}/{y}/{x}?blankTile=false', name: '水源水質', opacity: 0.8, active: false },
+        { url: 'https://eghouse.hccg.gov.tw/arcgis/rest/services/Tiled3857/Nature_geo/MapServer/tile/{z}/{y}/{x}?blankTile=false', name: '地質敏感', opacity: 0.8, active: false },
+        { url: 'https://eghouse.hccg.gov.tw/arcgis/rest/services/Tiled3857/Nature_environment/MapServer/tile/{z}/{y}/{x}?blankTile=false', name: '環保與汙染', opacity: 0.8, active: false },
+        { url: 'https://eghouse.hccg.gov.tw/arcgis/rest/services/Tiled3857/SlopeTW3857_fix/MapServer/tile/{z}/{y}/{x}?blankTile=false', name: '坡度示意圖', opacity: 0.8, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/LUIMAP/default/EPSG:3857/{z}/{y}/{x}', name: '國土利用', opacity: 0.8, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/LAND_OPENDATA/default/EPSG:3857/{z}/{y}/{x}', name: '公有土地', opacity: 0.8, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/SCHOOL/default/EPSG:3857/{z}/{y}/{x}', name: '學校', opacity: 0.8, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/Village/default/EPSG:3857/{z}/{y}/{x}', name: '村里界', opacity: 0.8, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/TOWN/default/EPSG:3857/{z}/{y}/{x}', name: '鄉市鎮界', opacity: 0.8, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/CITY/default/EPSG:3857/{z}/{y}/{x}', name: '縣市界', opacity: 0.8, active: false },
+        { url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png', name: 'OSM', opacity: 1, active: true, max: 18 },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}', name: '通用', opacity: 1, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/EMAP01/default/EPSG:3857/{z}/{y}/{x}', name: '灰階', opacity: 1, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/EPSG:3857/{z}/{y}/{x}', name: '航照', opacity: 1, active: false },
+        { url: 'https://mts1.google.com/vt/lyrs=s@186112443&hl=x-local&src=app&x={x}&y={y}&z={z}&s=Galile', name: 'Google衛星', opacity: 1, active: false },
+        { url: 'https://mts1.google.com/vt/lyrs=p@186112443&hl=x-local&src=app&x={x}&y={y}&z={z}&s=Galile', name: 'Google地形', opacity: 1, active: false },
+        { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', name: 'ESRI衛星', opacity: 1, active: false },
+        { url: 'https://wmts.nlsc.gov.tw/wmts/EMAPX99/default/EPSG:3857/{z}/{y}/{x}', name: '交通路網', opacity: 1, active: false },
+    ].map(raster => {
+        const token = "UZMPyXsuwgyREeneNi2o3mp6SSYCht9zGRUDfXbTKTa6iKGWKil43fWhCLLBvg5hlY7PTjQOMvMveuxhe1vYCg.."
+        raster.url = raster.url.replace('{token}', token)
+        return raster
+    })
+    const { Map, View, Feature, Geolocation, Observable, Overlay } = ol
+    const { Circle, Fill, Stroke, Style } = ol.style
+    const { Tile } = ol.layer
+    const VectorLayer = ol.layer.Vector
+    const { XYZ, Vector } = ol.source
+    const { Point, LineString, Polygon } = ol.geom
+    const { platformModifierKeyOnly } = ol.events.condition
+    const { Attribution, Control, FullScreen, MousePosition, OverviewMap, Rotate, ScaleLine, Zoom, ZoomSlider, ZoomToExtent } = ol.control
+    const { DoubleClickZoom, DragAndDrop, DragBox, DragPan, DragRotate, DragRotateAndZoom, DragZoom, Draw, KeyboardPan, KeyboardZoom, Modify, MouseWheelZoom, PinchRotate, PinchZoom, Pointer, Select, Snap } = ol.interaction
+    const { fromLonLat, proj4, toLonLat, toUserCoordinate, } = ol.proj
+    const { EsriJSON, GML, GML2, GML3, GML32, GMLBase, GPX, GeoJSON, IGC, IIIFInfo, JSONFeature, KML, MVT, OSMXML, OWS, Polyline, TextFeature, TopoJSON, WFS, WKT, XML } = ol.format
+    const CITY = {
+        Taipei: '臺北市', NewTaipei: '新北市', Taoyuan: '桃園市', Taichung: '臺中市', Tainan: '臺南市',
+        Kaohsiung: '高雄市', Keelung: '基隆市', Hsinchu: '新竹市', HsinchuCounty: '新竹縣', MiaoliCounty: '苗栗縣',
+        ChanghuaCounty: '彰化縣', NantouCounty: '南投縣', YunlinCounty: '雲林縣', ChiayiCounty: '嘉義縣',
+        Chiayi: '嘉義市', PingtungCounty: '屏東縣', YilanCounty: '宜蘭縣', HualienCounty: '花蓮縣',
+        TaitungCounty: '臺東縣', KinmenCounty: '金門縣', PenghuCounty: '澎湖縣', LienchiangCounty: '連江縣'
+    }
+    const METRO = { TRTC: '台北捷運', KRTC: '高雄捷運', TYMC: '桃園捷運', }
+    const TOUR = { ScenicSpot: '景點', Restaurant: '餐廳', Hotel: '飯店', Activity: '活動' }
+    var vm = new Vue({
+        el: '#app',
+        data: {
+            map: null, popup: null,
+            city: 'Taichung',
+            rows: [], cols: [], busETAs: [], busTab: '去程', searching: true,
+            ptxURL: 'https://ptx.transportdata.tw/MOTC/v2/',
+            metroOperator: 'TRTC',
+            geoTypes: ['Point', 'LineString', 'Polygon', 'Circle'],
+        },
+        methods: {
+            renameArray(array, props) {
+                function nest(obj, key) {
+                    function helper(obj, splitKey, idx = 0) {
+                        if (idx >= splitKey.length - 1) return obj[splitKey[idx]]
+                        else return helper(obj[splitKey[idx]], splitKey, idx + 1)
+                    }
+                    return helper(obj, key.split('.'))
+                }
+                return array.map(obj => {
+                    let row = {}
+                    for (let key in props) row[props[key]] = nest(obj, key)
+                    return row
+                })
+            },
+            props2select(props) {
+                return [...new Set(Object.keys(props).map(key => key.split('.')[0]))].join(',')
+            },
+            async BikeAvaiable(city = 'Taichung') {
+                let props = {
+                    'StationUID': 'UID',
+                    'ServiceAvailable': '服務中',
+                    'AvailableRentBikes': '可借',
+                    'AvailableReturnBikes': '可還',
+                }
+                let json = await fetch(`${this.ptxURL}/Bike/Availability/${city}?$select=${this.props2select(props)}&$format=JSON`).then(res => res.json())
+                return this.renameArray(json, props)
+            },
+            async Bike(city = 'Taichung') {
+                let props = {
+                    'StationUID': 'UID',
+                    'StationPosition.PositionLon': '經度',
+                    'StationPosition.PositionLat': '緯度',
+                    'StationName.Zh_tw': '站名',
+                    'StationAddress.Zh_tw': '地址',
+                    'BikesCapacity': '容量'
+                }
+                let json = await fetch(`${this.ptxURL}/Bike/Station/${city}?$select=${this.props2select(props)}&$format=JSON`).then(res => res.json())
+                let avails = await this.BikeAvaiable(city)
+                let group = 'Bike_' + city
+                let features = this.renameArray(json, props).map(row => {
+                    let idx = avails.findIndex(x => x['UID'] == row['UID'])
+                    let extProps = idx == -1 ? {} : avails[idx]
+                    return this.gismap.addVector('Point', [row['經度'], row['緯度']], {
+                        ...row, ...extProps, radius: 10, '群組': group
+                    })
+                })
+            },
+        },
+        mounted() {
+            // 初始化
+            this.map = new Map({
+                target: 'map',
+                controls: ol.control.defaults().extend([new ScaleLine({ units: 'degrees' })]),
+                interactions: ol.interaction.defaults().extend([new DragRotateAndZoom()]),
+                layers: RASTERS.filter(r => r.active).map(r => new Tile({ source: new XYZ({ url: r.url }) })),
+                view: new View({ projection: 'EPSG:3857', center: fromLonLat([121, 24]), zoom: 4, rotation: 0 })
+            })
+            // 疊層
+            this.popup = new Overlay({ element: document.getElementById('popup') })
+            this.map.addOverlay(this.popup)
+            this.map.on('click', e => {
+                let el = this.popup.getElement()
+                $(el).popover('dispose')
+                this.popup.setPosition(e.coordinate);
+                $(el).popover({
+                    selector: '#nav-tabs',
+                })
+                $(el).popover('show');
+            })
+            // 繪圖
+            let source = new Vector()
+            this.map.addLayer(new VectorLayer({ source }))
+            let modify = new Modify({ source })
+            this.map.addInteraction(modify)
+            let draw = new Draw({
+                source, type: 'Point',
+                style: new Style({
+                    fill: new Fill({ color: 'rgba(255, 255, 255, 0.2)', }),
+                    stroke: new Stroke({ color: '#ffcc33', width: 2, }),
+                    image: new Circle({ radius: 7, fill: new Fill({ color: '#ffcc33', }), }),
+                }),
+            })
+            let listener = draw.on('drawstart', evt => {
+                evt.feature.on('change', e => {
+                    let geom = e.target
+                    if (geom instanceof Polygon) geom.getInteriorPoint().getCoordinates()
+                    if (geom instanceof LineString) geom.getLastCoordinate()
+                })
+            })
+            draw.on('drawend', () => {
+                Observable.unByKey(listener)
+            })
+            // new Overlay({ element:, offset: [15, 0] }).setPosition()
+            this.map.addInteraction(draw)
+            let snap = new Snap({ source })
+            this.map.addInteraction(snap)
+            this.map.removeInteraction(snap)
+            // 選取
+            let select = new Select()
+            let dragBox = new DragBox({ condition: platformModifierKeyOnly })
+            dragBox.on('boxstart', () => {
+                select.getFeatures().clear()
+            })
+            dragBox.on('boxend', () => {
+                let extent = dragBox.getGeometry().getExtent()
+                let geom = dragBox.getGeometry().clone()
+                let features = []
+                source.forEachFeatureIntersectingExtent(extent, f => features.push(f))
+
+            })
+            select.getFeatures().on(['add', 'remove'], () => {
+                let names = select.getFeatures().getArray().map(f => f.get('name'))
+            })
+            // 匯入檔案
+            let dragAndDrop = new DragAndDrop({
+                formatConstructors: [GPX, GeoJSON, IGC, KML, TopoJSON],
+            })
+            dragAndDrop.on('addfeatures', e => {
+                let source = new Vector({ features: e.features })
+                this.map.addLayer(new VectorLayer({ source }))
+            })
+            this.map.addInteraction(dragAndDrop)
+            // 定位
+            let accFeat = new Feature()
+            let posFeat = new Feature().setStyle(new Style({
+                image: new Circle({ radius: 6, fill: new Fill({ color: '#3399CC', }), stroke: new Stroke({ color: '#fff', width: 2, }), }),
+            }))
+            this.map.addLayer(new VectorLayer({ source: new Vector({ features: [accFeat, posFeat] }) }))
+            let geolocation = Geolocation({
+                trackingOptions: { enableHighAccuracy: true, },
+                projection: this.map.getView().getProjection(),
+            })
+            geolocation.on('change', function () {
+                ['accuracy', 'altitude', 'altitudeAccuracy', 'heading', 'speed']
+            });
+            geolocation.on('change:accuracyGeometry', function () {
+                accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
+            });
+            geolocation.on('change:position', () => {
+                let coords = geolocation.getPosition()
+                posFeat.setGeometry(coords ? new Point(coords) : null)
+            })
+        }
+    })
+</script>
+
+</html>
